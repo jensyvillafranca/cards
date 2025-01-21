@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Cards</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>Administración de tarjetas</h1>
+    <form id="card-form">
+        <input type="text" id="title" placeholder="Título de tarjeta" required />
+        <div id="descriptions-container">
+            <input type="text" class="description" placeholder="Descripción 1" required />
+        </div>
+        <button type="button" id="add-description">Añadir descripción</button>
+        <button type="submit">Guardar tarjeta</button>
+    </form>
+
+    <div id="card-container"></div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
