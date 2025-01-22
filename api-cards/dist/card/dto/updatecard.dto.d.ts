@@ -1,7 +1,9 @@
+declare class CardDescriptionDto {
+    idDescription?: number;
+    description: string;
+}
 export declare class UpdateCardDto {
     title?: string;
-    descriptions?: {
-        idDescription?: number;
-        description: string;
-    }[];
+    descriptions?: CardDescriptionDto[];
 }
+export {};

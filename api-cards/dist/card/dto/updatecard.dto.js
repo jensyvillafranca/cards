@@ -11,24 +11,40 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateCardDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
+class CardDescriptionDto {
+}
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'ID de la descripción',
+        example: 1,
+    }),
+    __metadata("design:type", Number)
+], CardDescriptionDto.prototype, "idDescription", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Texto de la descripción',
+        example: 'Nueva descripción',
+    }),
+    __metadata("design:type", String)
+], CardDescriptionDto.prototype, "description", void 0);
 class UpdateCardDto {
 }
 exports.UpdateCardDto = UpdateCardDto;
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
-        description: 'Titulo actualizado de la tarjeta',
-        example: 'Nuevo Titulo',
+        description: 'Título actualizado de la tarjeta',
+        example: 'Nuevo Título',
     }),
     __metadata("design:type", String)
 ], UpdateCardDto.prototype, "title", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
-        description: 'Descripciones de la tarjeta',
+        description: 'Lista de descripciones de la tarjeta',
         example: [
-            { description: 'Nueva descripción 1' },
-            { description: 'Nueva descripción 2' }
+            { idDescription: 1, description: 'Nueva descripción 1' },
+            { idDescription: 2, description: 'Nueva descripción 2' },
         ],
-        type: [Object],
+        type: [CardDescriptionDto],
     }),
     __metadata("design:type", Array)
 ], UpdateCardDto.prototype, "descriptions", void 0);

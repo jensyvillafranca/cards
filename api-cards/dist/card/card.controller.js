@@ -28,8 +28,7 @@ let CardController = class CardController {
     }
     create(createCardDto, req) {
         const connection = req.connection;
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-        this.loggingService.log('INSERTAR', ip, `Se creó tarjeta con el título: ${createCardDto.title}`);
+        this.loggingService.log('INSERTAR', `Se creó tarjeta con el título: ${createCardDto.title}`);
         return this.cardService.create(createCardDto, connection);
     }
     findAll(req) {
@@ -42,14 +41,12 @@ let CardController = class CardController {
     }
     update(id, updateCardDto, req) {
         const connection = req.connection;
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-        this.loggingService.log('ACTUALIZAR', ip, `Se actualizó la tarjeta con el ID: ${id}`);
+        this.loggingService.log('ACTUALIZAR', `Se actualizó la tarjeta con el ID: ${id}`);
         return this.cardService.update(+id, updateCardDto, connection);
     }
     remove(id, req) {
         const connection = req.connection;
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-        this.loggingService.log('ELIMINAR', ip, `Se eliminó la tarjeta con el ID: ${id}`);
+        this.loggingService.log('ELIMINAR', `Se eliminó la tarjeta con el ID: ${id}`);
         return this.cardService.remove(+id, connection);
     }
 };

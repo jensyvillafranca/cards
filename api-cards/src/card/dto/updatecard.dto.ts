@@ -1,19 +1,34 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+class CardDescriptionDto {
+  @ApiPropertyOptional({
+    description: 'ID de la descripción',
+    example: 1,
+  })
+  idDescription?: number;
+
+  @ApiProperty({
+    description: 'Texto de la descripción',
+    example: 'Nueva descripción',
+  })
+  description: string;
+}
+
 export class UpdateCardDto {
   @ApiPropertyOptional({
-    description: 'Titulo actualizado de la tarjeta',
-    example: 'Nuevo Titulo',
+    description: 'Título actualizado de la tarjeta',
+    example: 'Nuevo Título',
   })
   title?: string;
 
   @ApiPropertyOptional({
-    description: 'Descripciones de la tarjeta',
+    description: 'Lista de descripciones de la tarjeta',
     example: [
-      {description: 'Nueva descripción 1' },
-      {description: 'Nueva descripción 2' }
+      { idDescription: 1, description: 'Nueva descripción 1' },
+      { idDescription: 2, description: 'Nueva descripción 2' },
     ],
-    type: [Object],
+    type: [CardDescriptionDto],
   })
-  descriptions?: { idDescription?: number; description: string }[];
+  descriptions?: CardDescriptionDto[];
 }
+
