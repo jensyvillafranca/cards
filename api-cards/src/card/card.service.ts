@@ -46,9 +46,11 @@ export class CardService {
   async findAll() {
     const query = `
         SELECT 
+            c.idCard,
             c.titleCard,
             c.createdAt,
-            d.description
+            d.description,
+            d.idDescription
         FROM 
             cards c
         LEFT JOIN 
@@ -64,26 +66,47 @@ export class CardService {
     result.forEach((row: any) => {
         if (!cardsMap.has(row.titleCard)) {
             cardsMap.set(row.titleCard, {
+              idCard: row.idCard,
               titleCard: row.titleCard,
               createdAt: row.createdAt,
               descriptions: [],
             });
         }
-        if (row.description) {
-          cardsMap.get(row.titleCard).descriptions.push(row.description);
-        }
+        if (row.idDescription && row.description) {
+          cardsMap.get(row.titleCard).descriptions.push({
+              idDescription: row.idDescription,
+              description: row.description,
+          });
+      }
     });
     return Array.from(cardsMap.values());
 }
 
 
   async findOne(id: number) {
-    const query = `SELECT * FROM cards WHERE id = ?`;
-    const [card] = await this.dbService.query(query, [id]);
-    if (card) {
-      card.descriptions = JSON.parse(card.descriptions);
+    const query = `
+        SELECT 
+            c.titleCard, 
+            c.createdAt, 
+            d.description 
+        FROM cards c
+        LEFT JOIN descriptions d ON c.idCard = d.idCard
+        WHERE c.idCard = ?`;
+    
+    const results = await this.dbService.query(query, [id]);
+
+    if (results.length > 0) {
+        const card = {
+            title: results[0].titleCard,
+            createdAt: results[0].createdAt,
+            descriptions: results.map(row => ({
+                description: row.description
+            }))
+        };
+        return card;
     }
-    return card;
+
+    return null;
   }
 
   async update(id: number, updateCardDto: UpdateCardDto) {
@@ -95,24 +118,43 @@ export class CardService {
     }
   
     if (descriptions && descriptions.length > 0) {
+      const existingDescriptionsQuery = `SELECT idDescription FROM descriptions WHERE idCard = ?`;
+      const existingDescriptions = await this.dbService.query(existingDescriptionsQuery, [id]);
+
+      //?
+      const existingIds = existingDescriptions.map((desc) => desc.idDescription);
+
       for (const desc of descriptions) {
         const { idDescription, description } = desc;
-  
-        if (idDescription) {
-          const queryUpdateDescription = `
-            UPDATE descriptions SET description = ? WHERE idDescription = ? AND idCard = ?
-          `;
-          await this.dbService.query(queryUpdateDescription, [description, idDescription, id]);
+
+        if (idDescription && existingIds.includes(idDescription)) {
+            // Actualizar descripción existente
+            const queryUpdateDescription = `
+                UPDATE descriptions SET description = ? WHERE idDescription = ? AND idCard = ?
+            `;
+            await this.dbService.query(queryUpdateDescription, [description, idDescription, id]);
+        } else if (!idDescription) {
+            // Insertar nueva descripción
+            const queryInsertDescription = `
+                INSERT INTO descriptions (description, idCard) VALUES (?, ?)
+            `;
+            await this.dbService.query(queryInsertDescription, [description, id]);
         }
-      }
+    }
     }
     return { id, title, descriptions };
   }
   
 
   async remove(id: number) {
-    const query = `DELETE FROM cards WHERE id = ?`;
-    await this.dbService.query(query, [id]);
-    return { message: `Card with id ${id} deleted successfully.` };
+    const deleteDescriptionsQuery = `DELETE FROM descriptions WHERE idCard = ?`;
+    await this.dbService.query(deleteDescriptionsQuery, [id]);
+  
+    const deleteCardsQuery = `DELETE FROM cards WHERE idCard = ?`;
+    await this.dbService.query(deleteCardsQuery, [id]);
+  
+    return { message: `Card with id ${id} and its descriptions deleted successfully.` };
   }
+  
+  
 }
