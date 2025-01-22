@@ -11,7 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TransactionInterceptor = void 0;
 const common_1 = require("@nestjs/common");
-const rxjs_1 = require("rxjs");
+const operators_1 = require("rxjs/operators");
 const database_service_1 = require("../database/database.service");
 let TransactionInterceptor = class TransactionInterceptor {
     constructor(databaseService) {
@@ -20,19 +20,20 @@ let TransactionInterceptor = class TransactionInterceptor {
     async intercept(context, next) {
         const httpContext = context.switchToHttp();
         const request = httpContext.getRequest();
-        return new rxjs_1.Observable((observer) => {
-            this.databaseService.transaction(async (connection) => {
-                request.connection = connection;
-                return next.handle().toPromise();
-            })
-                .then((result) => {
-                observer.next(result);
-                observer.complete();
-            })
-                .catch((error) => {
-                observer.error(error);
-            });
-        });
+        const connection = await this.databaseService.getConnection();
+        await connection.beginTransaction();
+        console.log('Transacción iniciada');
+        request.connection = connection;
+        return next.handle().pipe((0, operators_1.tap)(async () => {
+            await connection.commit();
+            console.log('Transacción confirmada (commit)');
+            connection.release();
+        }), (0, operators_1.catchError)(async (error) => {
+            await connection.rollback();
+            console.error('Transacción revertida (rollback) debido a un error:', error);
+            connection.release();
+            throw error;
+        }));
     }
 };
 exports.TransactionInterceptor = TransactionInterceptor;

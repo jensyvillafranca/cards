@@ -24,6 +24,7 @@ export declare class CardController {
             idDescription?: number;
             description: string;
         }[] | undefined;
+        message: string;
     }>;
     remove(id: string, req: any): Promise<{
         message: string;

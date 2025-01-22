@@ -20,6 +20,7 @@ export declare class CardService {
             idDescription?: number;
             description: string;
         }[] | undefined;
+        message: string;
     }>;
     remove(id: number, connection: any): Promise<{
         message: string;

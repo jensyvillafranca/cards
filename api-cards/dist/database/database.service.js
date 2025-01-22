@@ -21,6 +21,9 @@ let DatabaseService = class DatabaseService {
             queueLimit: 0,
         });
     }
+    async getConnection() {
+        return this.pool.getConnection();
+    }
     async query(query, params = []) {
         const connection = await this.pool.getConnection();
         try {

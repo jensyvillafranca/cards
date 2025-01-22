@@ -20,6 +20,10 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     // console.log('Conexión a la base de datos establecidaPoo');
   }
 
+  async getConnection(): Promise<mysql.PoolConnection> {
+    return this.pool.getConnection(); 
+  }
+
   async query(query: string, params: any[] = []): Promise<any> {
     const connection = await this.pool.getConnection();
     try {

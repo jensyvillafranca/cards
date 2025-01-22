@@ -4,12 +4,12 @@ document.getElementById("card-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const title = document.getElementById("title").value; 
     const descriptionElements = document.querySelectorAll(".description");
-    const descriptions = Array.from(descriptionElements).map((input) => input.value);
+    const descriptions = Array.from(descriptionElements).map((input) => ({
+        description: input.value.trim(), 
+    }));
 
     console.log({ title, descriptions });
 
-    const cardId = e.target.dataset.cardId;
-        // Crear nueva tarjeta
     try {
         await fetch(API_URL, {
             method: "POST",
@@ -25,9 +25,8 @@ document.getElementById("card-form").addEventListener("submit", async (e) => {
     }
 });
 
-// Añadir campos dinámicos para descripciones
 document.getElementById("add-description").addEventListener("click", () => {
-    const container = document.getElementById("descriptions-container"); // ID correcto
+    const container = document.getElementById("descriptions-container"); 
     const count = container.children.length + 1;
     const input = document.createElement("input");
     input.type = "text";
@@ -47,9 +46,8 @@ async function loadCards() {
             const cardElement = document.createElement("div");
             cardElement.classList.add("card");
 
-            // console.log(card.descriptions.idDescription);
             const descriptionsHtml = card.descriptions
-                .map((desc) => `<li id="${desc.idDescription}">${desc.description}</li>`)
+                .map((desc) => `<li data-id="${desc.idDescription}">${desc.description}</li>`)
                 .join("");
 
             cardElement.innerHTML = `
@@ -67,7 +65,6 @@ async function loadCards() {
     }
 }
 
-// Eliminar tarjeta
 async function deleteCard(id) {
     try {
         await fetch(`${API_URL}/${id}`, { method: "DELETE" });
@@ -77,7 +74,6 @@ async function deleteCard(id) {
     }
 }
 
-// Resetear formulario
 function resetForm() {
     document.getElementById("title").value = "";
     document.getElementById("descriptions-container").innerHTML = `
@@ -88,16 +84,15 @@ function resetForm() {
 }
 
 
-//Esto es para poder actualizar los datos 
 async function updateCard(idCard) {
     const title = document.getElementById("title").value;
-    const descriptions = Array.from(document.querySelectorAll(".description")).map((input, index) => ({
-        idDescription: input.dataset.idDescription || null, 
+
+    const descriptions = Array.from(document.querySelectorAll(".description")).map((input) => ({
+        idDescription: input.dataset.idDescription ? Number(input.dataset.idDescription) : null, // Aseguramos que sea numérico o null
         description: input.value.trim(),
     }));
 
     const updateCardDto = { title, descriptions };
-    console.log(descriptions);
 
     try {
         const response = await fetch(`${API_URL}/${idCard}`, {
@@ -123,14 +118,11 @@ async function updateCard(idCard) {
 
 
 function editCard(idCard, titleCard, descriptions) {
-    // Asignar el título al campo correspondiente
     document.getElementById("title").value = decodeURIComponent(titleCard);
 
-    // Limpiar el contenedor de descripciones
     const descriptionsContainer = document.getElementById("descriptions-container");
     descriptionsContainer.innerHTML = "";
 
-    // Procesar y mostrar las descripciones
     const parsedDescriptions = JSON.parse(decodeURIComponent(descriptions));
     parsedDescriptions.forEach((desc) => {
         const input = document.createElement("input");
@@ -138,14 +130,12 @@ function editCard(idCard, titleCard, descriptions) {
         input.className = "description";
         input.placeholder = "Descripción";
 
-        // Asignar valores de descripción
-        input.value = desc.description || ""; // Si `desc` es un objeto, usamos `desc.description`
-        input.dataset.idDescription = desc.idDescription || null; // Guardar el ID en data-idDescription
+        input.value = desc.description || ""; 
+        input.dataset.idDescription = desc.idDescription || null; 
 
         descriptionsContainer.appendChild(input);
     });
 
-    // Configurar botón de actualización
     const updateButton = document.getElementById("update-button");
     updateButton.onclick = () => updateCard(idCard);
     document.getElementById("update-button").style.display = "inline-block";

@@ -106,23 +106,39 @@ let CardService = class CardService {
             const existingDescriptionsQuery = `SELECT idDescription FROM descriptions WHERE idCard = ?`;
             const [existingDescriptions] = await connection.execute(existingDescriptionsQuery, [id]);
             const existingIds = existingDescriptions.map((desc) => desc.idDescription);
+            const idsToKeep = [];
             for (const desc of descriptions) {
                 const { idDescription, description } = desc;
                 if (idDescription && existingIds.includes(idDescription)) {
                     const queryUpdateDescription = `
-            UPDATE descriptions SET description = ? WHERE idDescription = ? AND idCard = ?
+            UPDATE descriptions 
+            SET description = ? 
+            WHERE idDescription = ? AND idCard = ?
           `;
                     await connection.execute(queryUpdateDescription, [description, idDescription, id]);
+                    idsToKeep.push(idDescription);
                 }
                 else if (!idDescription) {
                     const queryInsertDescription = `
-            INSERT INTO descriptions (description, idCard) VALUES (?, ?)
+            INSERT INTO descriptions (description, idCard) 
+            VALUES (?, ?)
           `;
-                    await connection.execute(queryInsertDescription, [description, id]);
+                    const [result] = await connection.execute(queryInsertDescription, [description, id]);
+                    idsToKeep.push(result.insertId);
                 }
             }
+            const idsToDelete = existingIds.filter((id) => !idsToKeep.includes(id));
+            if (idsToDelete.length > 0) {
+                const queryDeleteDescriptions = `DELETE FROM descriptions WHERE idDescription IN (?)`;
+                await connection.execute(queryDeleteDescriptions, [idsToDelete]);
+            }
         }
-        return { id, title, descriptions };
+        return {
+            id,
+            title,
+            descriptions,
+            message: 'Tarjeta actualizada exitosamente.',
+        };
     }
     async remove(id, connection) {
         const deleteDescriptionsQuery = `DELETE FROM descriptions WHERE idCard = ?`;
