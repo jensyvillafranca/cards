@@ -19,12 +19,12 @@ let CardService = class CardService {
     async create(createCardDto) {
         const { title, descriptions } = createCardDto;
         if (!title) {
-            throw new Error('El titulo es requerido.');
+            throw new Error('El título es requerido.');
         }
         if (!descriptions || !Array.isArray(descriptions)) {
             throw new Error('Las descripciones deben ser una matriz válida.');
         }
-        const query = `
+        const queryInsertCard = `
       INSERT INTO cards (titleCard, createdAt) 
       VALUES (?, NOW())
     `;
@@ -32,21 +32,23 @@ let CardService = class CardService {
       INSERT INTO descriptions (description, idCard) 
       VALUES (?, ?)
     `;
-        try {
-            const result = await this.dbService.query(query, [title]);
-            const idCard = result.insertId;
-            for (const desc of descriptions) {
-                if (typeof desc !== 'string') {
-                    throw new Error('Cada descripción debe ser un string.');
+        return await this.dbService.transaction(async (connection) => {
+            try {
+                const [cardResult] = await connection.execute(queryInsertCard, [title]);
+                const idCard = cardResult.insertId;
+                for (const desc of descriptions) {
+                    if (typeof desc !== 'string' || desc.trim() === '') {
+                        continue;
+                    }
+                    await connection.execute(queryInsertDescriptions, [desc.trim(), idCard]);
                 }
-                await this.dbService.query(queryInsertDescriptions, [desc, idCard]);
+                return { idCard, titleCard: title, descriptions };
             }
-            return { idCard, titleCard: title, descriptions };
-        }
-        catch (error) {
-            console.error('Error al ejecutar la consulta:', error);
-            throw error;
-        }
+            catch (error) {
+                console.error('Error al insertar la tarjeta y descripciones:', error);
+                throw error;
+            }
+        });
     }
     async findAll() {
         const query = `
@@ -107,38 +109,52 @@ let CardService = class CardService {
     }
     async update(id, updateCardDto) {
         const { title, descriptions } = updateCardDto;
-        if (title) {
-            const queryUpdateCard = `UPDATE cards SET titleCard = ? WHERE idCard = ?`;
-            await this.dbService.query(queryUpdateCard, [title, id]);
-        }
-        if (descriptions && descriptions.length > 0) {
-            const existingDescriptionsQuery = `SELECT idDescription FROM descriptions WHERE idCard = ?`;
-            const existingDescriptions = await this.dbService.query(existingDescriptionsQuery, [id]);
-            const existingIds = existingDescriptions.map((desc) => desc.idDescription);
-            for (const desc of descriptions) {
-                const { idDescription, description } = desc;
-                if (idDescription && existingIds.includes(idDescription)) {
-                    const queryUpdateDescription = `
+        return await this.dbService.transaction(async (connection) => {
+            try {
+                if (title) {
+                    const queryUpdateCard = `UPDATE cards SET titleCard = ? WHERE idCard = ?`;
+                    await connection.execute(queryUpdateCard, [title, id]);
+                }
+                if (descriptions && descriptions.length > 0) {
+                    const existingDescriptionsQuery = `SELECT idDescription FROM descriptions WHERE idCard = ?`;
+                    const [existingDescriptions] = await connection.execute(existingDescriptionsQuery, [id]);
+                    const existingIds = existingDescriptions.map((desc) => desc.idDescription);
+                    for (const desc of descriptions) {
+                        const { idDescription, description } = desc;
+                        if (idDescription && existingIds.includes(idDescription)) {
+                            const queryUpdateDescription = `
                 UPDATE descriptions SET description = ? WHERE idDescription = ? AND idCard = ?
-            `;
-                    await this.dbService.query(queryUpdateDescription, [description, idDescription, id]);
-                }
-                else if (!idDescription) {
-                    const queryInsertDescription = `
+              `;
+                            await connection.execute(queryUpdateDescription, [description, idDescription, id]);
+                        }
+                        else if (!idDescription) {
+                            const queryInsertDescription = `
                 INSERT INTO descriptions (description, idCard) VALUES (?, ?)
-            `;
-                    await this.dbService.query(queryInsertDescription, [description, id]);
+              `;
+                            await connection.execute(queryInsertDescription, [description, id]);
+                        }
+                    }
                 }
+                return { id, title, descriptions };
             }
-        }
-        return { id, title, descriptions };
+            catch (error) {
+                console.error('Error en la transacción de actualización:', error);
+                throw error;
+            }
+        });
     }
     async remove(id) {
-        const deleteDescriptionsQuery = `DELETE FROM descriptions WHERE idCard = ?`;
-        await this.dbService.query(deleteDescriptionsQuery, [id]);
-        const deleteCardsQuery = `DELETE FROM cards WHERE idCard = ?`;
-        await this.dbService.query(deleteCardsQuery, [id]);
-        return { message: `Card with id ${id} and its descriptions deleted successfully.` };
+        return await this.dbService.transaction(async (connection) => {
+            try {
+                const deleteDescriptionsQuery = `DELETE FROM descriptions WHERE idCard = ?`;
+                await connection.execute(deleteDescriptionsQuery, [id]);
+                const deleteCardsQuery = `DELETE FROM cards WHERE idCard = ?`;
+                await connection.execute(deleteCardsQuery, [id]);
+                return { message: `La tarjeta con el ${id} y sus descripciones ha sido eliminada exitosamente` };
+            }
+            catch (error) {
+            }
+        });
     }
 };
 exports.CardService = CardService;

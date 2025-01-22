@@ -11,27 +11,50 @@ const common_1 = require("@nestjs/common");
 const mysql = require("mysql2/promise");
 let DatabaseService = class DatabaseService {
     async onModuleInit() {
-        this.connection = await mysql.createConnection({
+        this.pool = mysql.createPool({
             host: 'localhost',
             user: 'root',
             password: 'root',
             database: 'bdcards',
+            waitForConnections: true,
+            connectionLimit: 10,
+            queueLimit: 0,
         });
-        console.log('Conexión a la base de datos establecida');
     }
     async query(query, params = []) {
+        const connection = await this.pool.getConnection();
         try {
-            const [rows] = await this.connection.execute(query, params);
+            const [rows] = await connection.execute(query, params);
             return rows;
         }
         catch (error) {
             console.error('Error al ejecutar la consulta:', error);
             throw error;
         }
+        finally {
+            connection.release();
+        }
+    }
+    async transaction(callback) {
+        const connection = await this.pool.getConnection();
+        try {
+            await connection.beginTransaction();
+            const result = await callback(connection);
+            await connection.commit();
+            return result;
+        }
+        catch (error) {
+            await connection.rollback();
+            console.log("Error en la trasacción: ", error);
+            throw error;
+        }
+        finally {
+            connection.release();
+        }
     }
     async onModuleDestroy() {
-        await this.connection.end();
-        console.log('Conexión a la base de datos cerrada');
+        await this.pool.end();
+        console.log('Pool de conexión cerrado');
     }
 };
 exports.DatabaseService = DatabaseService;

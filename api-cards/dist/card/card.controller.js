@@ -18,11 +18,15 @@ const card_service_1 = require("./card.service");
 const createcard_dto_1 = require("./dto/createcard.dto");
 const updatecard_dto_1 = require("./dto/updatecard.dto");
 const swagger_1 = require("@nestjs/swagger");
+const logging_service_1 = require("../logs/logging.service");
 let CardController = class CardController {
-    constructor(cardService) {
+    constructor(cardService, loggingService) {
         this.cardService = cardService;
+        this.loggingService = loggingService;
     }
-    create(createCardDto) {
+    create(createCardDto, req) {
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        this.loggingService.log('INSERTAR', ip, `Se creo tarjeta con el título: ${createCardDto.title}`);
         return this.cardService.create(createCardDto);
     }
     findAll() {
@@ -31,10 +35,14 @@ let CardController = class CardController {
     findOne(id) {
         return this.cardService.findOne(+id);
     }
-    update(id, updateCardDto) {
+    update(id, updateCardDto, req) {
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        this.loggingService.log('ACTUALIZAR', ip, `Se actualizó la tarjeta con el ID: ${id}`);
         return this.cardService.update(+id, updateCardDto);
     }
-    remove(id) {
+    remove(id, req) {
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        this.loggingService.log('ELIMINAR', ip, `Se eliminó la tarjeta con el ID: ${id}`);
         return this.cardService.remove(+id);
     }
 };
@@ -46,8 +54,9 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Datos de entrada no válidos.' }),
     (0, swagger_1.ApiBody)({ description: 'Cuerpo de la solicitud para crear una tarjeta', type: createcard_dto_1.CreateCardDto }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [createcard_dto_1.CreateCardDto]),
+    __metadata("design:paramtypes", [createcard_dto_1.CreateCardDto, Object]),
     __metadata("design:returntype", void 0)
 ], CardController.prototype, "create", null);
 __decorate([
@@ -79,8 +88,9 @@ __decorate([
     (0, swagger_1.ApiBody)({ description: 'Cuerpo de la solicitud para actualizar la tarjeta', type: updatecard_dto_1.UpdateCardDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, updatecard_dto_1.UpdateCardDto]),
+    __metadata("design:paramtypes", [String, updatecard_dto_1.UpdateCardDto, Object]),
     __metadata("design:returntype", void 0)
 ], CardController.prototype, "update", null);
 __decorate([
@@ -90,13 +100,15 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Tarjeta no encontrada.' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Identificador único de la tarjeta', type: Number }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], CardController.prototype, "remove", null);
 exports.CardController = CardController = __decorate([
     (0, swagger_1.ApiTags)('Tarjetas'),
     (0, common_1.Controller)('cards'),
-    __metadata("design:paramtypes", [card_service_1.CardService])
+    __metadata("design:paramtypes", [card_service_1.CardService,
+        logging_service_1.LoggingService])
 ], CardController);
 //# sourceMappingURL=card.controller.js.map
