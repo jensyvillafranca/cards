@@ -11,14 +11,15 @@ const common_1 = require("@nestjs/common");
 const card_service_1 = require("./card.service");
 const database_module_1 = require("../database/database.module");
 const card_controller_1 = require("./card.controller");
+const logging_service_1 = require("../logs/logging.service");
 let CardModule = class CardModule {
 };
 exports.CardModule = CardModule;
 exports.CardModule = CardModule = __decorate([
     (0, common_1.Module)({
-        imports: [database_module_1.DatabaseModule],
+        imports: [database_module_1.DatabaseModule,],
         controllers: [card_controller_1.CardController],
-        providers: [card_service_1.CardService],
+        providers: [card_service_1.CardService, logging_service_1.LoggingService],
     })
 ], CardModule);
 //# sourceMappingURL=card.module.js.map

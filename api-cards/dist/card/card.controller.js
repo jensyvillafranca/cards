@@ -19,31 +19,38 @@ const createcard_dto_1 = require("./dto/createcard.dto");
 const updatecard_dto_1 = require("./dto/updatecard.dto");
 const swagger_1 = require("@nestjs/swagger");
 const logging_service_1 = require("../logs/logging.service");
+const common_2 = require("@nestjs/common");
+const transaction_interceptor_1 = require("../interceptors/transaction.interceptor");
 let CardController = class CardController {
     constructor(cardService, loggingService) {
         this.cardService = cardService;
         this.loggingService = loggingService;
     }
     create(createCardDto, req) {
+        const connection = req.connection;
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-        this.loggingService.log('INSERTAR', ip, `Se creo tarjeta con el título: ${createCardDto.title}`);
-        return this.cardService.create(createCardDto);
+        this.loggingService.log('INSERTAR', ip, `Se creó tarjeta con el título: ${createCardDto.title}`);
+        return this.cardService.create(createCardDto, connection);
     }
-    findAll() {
-        return this.cardService.findAll();
+    findAll(req) {
+        const connection = req.connection;
+        return this.cardService.findAll(connection);
     }
-    findOne(id) {
-        return this.cardService.findOne(+id);
+    findOne(id, req) {
+        const connection = req.connection;
+        return this.cardService.findOne(+id, connection);
     }
     update(id, updateCardDto, req) {
+        const connection = req.connection;
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
         this.loggingService.log('ACTUALIZAR', ip, `Se actualizó la tarjeta con el ID: ${id}`);
-        return this.cardService.update(+id, updateCardDto);
+        return this.cardService.update(+id, updateCardDto, connection);
     }
     remove(id, req) {
+        const connection = req.connection;
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
         this.loggingService.log('ELIMINAR', ip, `Se eliminó la tarjeta con el ID: ${id}`);
-        return this.cardService.remove(+id);
+        return this.cardService.remove(+id, connection);
     }
 };
 exports.CardController = CardController;
@@ -63,8 +70,9 @@ __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'Obtener todas las tarjetas' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Lista de todas las tarjetas.' }),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], CardController.prototype, "findAll", null);
 __decorate([
@@ -74,8 +82,9 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Tarjeta no encontrada.' }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'Identificador único de la tarjeta', type: Number }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], CardController.prototype, "findOne", null);
 __decorate([
@@ -108,6 +117,7 @@ __decorate([
 exports.CardController = CardController = __decorate([
     (0, swagger_1.ApiTags)('Tarjetas'),
     (0, common_1.Controller)('cards'),
+    (0, common_2.UseInterceptors)(transaction_interceptor_1.TransactionInterceptor),
     __metadata("design:paramtypes", [card_service_1.CardService,
         logging_service_1.LoggingService])
 ], CardController);

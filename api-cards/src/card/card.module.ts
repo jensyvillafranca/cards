@@ -10,10 +10,11 @@ import { Module } from '@nestjs/common';
 import { CardService } from './card.service';
 import { DatabaseModule } from '../database/database.module';
 import { CardController } from './card.controller';
+import { LoggingService } from '../logs/logging.service';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule,],
   controllers: [CardController],
-  providers: [CardService],
+  providers: [CardService, LoggingService],
 })
 export class CardModule {}
