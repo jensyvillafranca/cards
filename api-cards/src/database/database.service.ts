@@ -1,23 +1,26 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import * as mysql from 'mysql2/promise';
+import * as dotenv from 'dotenv';
+
+// Cargar las variables de entorno
+dotenv.config();
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
-  // private connection: mysql.Connection;
   private pool: mysql.Pool;
 
   async onModuleInit() {
     this.pool = mysql.createPool({
-      host: 'localhost',
-      user: 'root',
-      password: 'root',
-      database: 'bdcards',
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
       waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
+      connectionLimit: Number(process.env.DB_CONNECTION_LIMIT) || 10,
+      queueLimit: Number(process.env.DB_QUEUE_LIMIT) || 0,
     });
-    // console.log('Conexión a la base de datos establecidaPoo');
+    console.log('Conexión a la base de datos establecida');
   }
 
   async getConnection(): Promise<mysql.PoolConnection> {
@@ -46,7 +49,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       return result;
     } catch(error){
       await connection.rollback();
-      console.log("Error en la trasacción: ", error);
+      console.log("Error en la transacción: ", error);
       throw error;
     } finally {
       connection.release();
