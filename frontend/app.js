@@ -4,26 +4,29 @@ document.getElementById("card-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const title = document.getElementById("title").value; 
     const descriptionElements = document.querySelectorAll(".description");
-    const descriptions = Array.from(descriptionElements).map((input) => ({
-        description: input.value.trim(), 
-    }));
+    const descriptions = Array.from(descriptionElements)
+        .map((input) => input.value.trim()) // Solo el valor de texto
+        .filter((desc) => desc !== ""); // Filtrar descripciones vacías
 
-    console.log({ title, descriptions });
+    console.log("Datos enviados:", JSON.stringify({ title, descriptions }));
 
     try {
-        await fetch(API_URL, {
+        const response = await fetch(API_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({ title, descriptions }),
         });
+        const data = await response.json();
+        console.log("Respuesta del backend:", data);
         resetForm();
         loadCards();
     } catch (error) {
         console.error("Error al añadir tarjeta:", error);
     }
 });
+
 
 document.getElementById("add-description").addEventListener("click", () => {
     const container = document.getElementById("descriptions-container"); 
