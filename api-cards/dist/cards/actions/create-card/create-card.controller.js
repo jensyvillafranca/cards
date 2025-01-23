@@ -25,10 +25,20 @@ let CreateCardController = class CreateCardController {
         this.cardService = cardService;
         this.loggingService = loggingService;
     }
-    create(createCardDto, req) {
+    async create(createCardDto, req) {
         const connection = req.connection;
-        this.loggingService.log('INSERTAR', `Se creó tarjeta con el título: ${createCardDto.title}`);
-        return this.cardService.create(createCardDto, connection);
+        try {
+            this.loggingService.log('INSERTAR', `Se creó tarjeta con el título: ${createCardDto.title}`);
+            const result = await this.cardService.create(createCardDto, connection);
+            return {
+                message: 'tarjeta creada exitosamente...',
+                data: result,
+            };
+        }
+        catch (error) {
+            console.error('Error al crear tarjeta:', error);
+            throw error;
+        }
     }
 };
 exports.CreateCardController = CreateCardController;
@@ -42,7 +52,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_card_dto_1.CreateCardDto, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], CreateCardController.prototype, "create", null);
 exports.CreateCardController = CreateCardController = __decorate([
     (0, swagger_1.ApiTags)('Tarjetas'),

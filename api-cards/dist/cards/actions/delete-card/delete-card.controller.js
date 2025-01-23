@@ -24,10 +24,20 @@ let DeleteCardController = class DeleteCardController {
         this.cardService = cardService;
         this.loggingService = loggingService;
     }
-    remove(id, req) {
+    async remove(id, req) {
         const connection = req.connection;
-        this.loggingService.log('ELIMINAR', `Se eliminó la tarjeta con el ID: ${id}`);
-        return this.cardService.remove(+id, connection);
+        try {
+            this.loggingService.log('ELIMINAR', `Se eliminó la tarjeta con el ID: ${id}`);
+            const result = await this.cardService.remove(+id, connection);
+            return {
+                message: 'tarjeta eliminada exitosamente...',
+                data: result,
+            };
+        }
+        catch (error) {
+            console.error('Error al eliminar tarjeta:', error);
+            throw error;
+        }
     }
 };
 exports.DeleteCardController = DeleteCardController;
@@ -41,7 +51,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], DeleteCardController.prototype, "remove", null);
 exports.DeleteCardController = DeleteCardController = __decorate([
     (0, swagger_1.ApiTags)('Tarjetas'),

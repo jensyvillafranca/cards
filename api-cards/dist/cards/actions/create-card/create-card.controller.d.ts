@@ -6,8 +6,11 @@ export declare class CreateCardController {
     private readonly loggingService;
     constructor(cardService: CreateCardService, loggingService: LoggingService);
     create(createCardDto: CreateCardDto, req: any): Promise<{
-        idCard: any;
-        titleCard: string;
-        descriptions: string[];
+        message: string;
+        data: {
+            idCard: number;
+            titleCard: string;
+            descriptions: string[];
+        };
     }>;
 }

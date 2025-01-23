@@ -8,56 +8,57 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DatabaseService = void 0;
 const common_1 = require("@nestjs/common");
-const mysql = require("mysql2/promise");
+const knex_1 = require("knex");
+const dotenv = require("dotenv");
+dotenv.config();
 let DatabaseService = class DatabaseService {
     async onModuleInit() {
-        this.pool = mysql.createPool({
-            host: 'localhost',
-            user: 'root',
-            password: 'root',
-            database: 'bdcards',
-            waitForConnections: true,
-            connectionLimit: 10,
-            queueLimit: 0,
+        this.knexInstance = (0, knex_1.default)({
+            client: 'mysql2',
+            connection: {
+                host: process.env.DB_HOST,
+                user: process.env.DB_USER,
+                password: process.env.DB_PASSWORD,
+                database: process.env.DB_NAME,
+                port: Number(process.env.DB_PORT) || 3306,
+            },
+            pool: {
+                min: Number(process.env.DB_POOL_MIN) || 2,
+                max: Number(process.env.DB_POOL_MAX) || 10,
+            },
         });
+        console.log('Conexión a la base de datos establecida con Knex');
     }
-    async getConnection() {
-        return this.pool.getConnection();
+    getKnexInstance() {
+        return this.knexInstance;
     }
-    async query(query, params = []) {
-        const connection = await this.pool.getConnection();
+    async query(tableName, conditions = {}) {
         try {
-            const [rows] = await connection.execute(query, params);
-            return rows;
+            const result = await this.knexInstance(tableName).where(conditions).select();
+            return result;
         }
         catch (error) {
             console.error('Error al ejecutar la consulta:', error);
             throw error;
         }
-        finally {
-            connection.release();
-        }
     }
     async transaction(callback) {
-        const connection = await this.pool.getConnection();
-        try {
-            await connection.beginTransaction();
-            const result = await callback(connection);
-            await connection.commit();
-            return result;
-        }
-        catch (error) {
-            await connection.rollback();
-            console.log("Error en la trasacción: ", error);
-            throw error;
-        }
-        finally {
-            connection.release();
-        }
+        return this.knexInstance.transaction(async (trx) => {
+            try {
+                const result = await callback(trx);
+                await trx.commit();
+                return result;
+            }
+            catch (error) {
+                await trx.rollback();
+                console.error('Error en la transacción:', error);
+                throw error;
+            }
+        });
     }
     async onModuleDestroy() {
-        await this.pool.end();
-        console.log('Pool de conexión cerrado');
+        await this.knexInstance.destroy();
+        console.log('Conexiones cerradas y Knex destruido');
     }
 };
 exports.DatabaseService = DatabaseService;

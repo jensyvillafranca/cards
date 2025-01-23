@@ -1,10 +1,10 @@
-import { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import * as mysql from 'mysql2/promise';
+import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Knex } from 'knex';
 export declare class DatabaseService implements OnModuleInit, OnModuleDestroy {
-    private pool;
+    private knexInstance;
     onModuleInit(): Promise<void>;
-    getConnection(): Promise<mysql.PoolConnection>;
-    query(query: string, params?: any[]): Promise<any>;
-    transaction(callback: (connection: mysql.PoolConnection) => Promise<any>): Promise<any>;
+    getKnexInstance(): Knex;
+    query(tableName: string, conditions?: any): Promise<any>;
+    transaction<T>(callback: (trx: Knex.Transaction) => Promise<T>): Promise<T>;
     onModuleDestroy(): Promise<void>;
 }

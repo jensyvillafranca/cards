@@ -17,23 +17,23 @@ let CreateCardService = class CreateCardService {
         if (!descriptions || !Array.isArray(descriptions)) {
             throw new Error('Las descripciones deben ser una matriz válida.');
         }
-        const queryInsertCard = `
-      INSERT INTO cards (titleCard, createdAt) 
-      VALUES (?, NOW())
-    `;
-        const queryInsertDescriptions = `
-      INSERT INTO descriptions (description, idCard) 
-      VALUES (?, ?)
-    `;
-        const [cardResult] = await connection.execute(queryInsertCard, [title]);
-        const idCard = cardResult.insertId;
-        for (const desc of descriptions) {
-            if (typeof desc !== 'string' || desc.trim() === '') {
-                continue;
+        try {
+            const [idCard] = await connection('cards').insert({ titleCard: title, createdAt: connection.fn.now() });
+            const descriptionsToInsert = descriptions
+                .filter((desc) => typeof desc === 'string' && desc.trim() !== '')
+                .map((desc) => ({
+                description: desc.trim(),
+                idCard,
+            }));
+            if (descriptionsToInsert.length > 0) {
+                await connection('descriptions').insert(descriptionsToInsert);
             }
-            await connection.execute(queryInsertDescriptions, [desc.trim(), idCard]);
+            return { idCard, titleCard: title, descriptions };
         }
-        return { idCard, titleCard: title, descriptions };
+        catch (error) {
+            console.error('Error cuando se intentó crear la tarjeta...', error);
+            throw error;
+        }
     }
 };
 exports.CreateCardService = CreateCardService;

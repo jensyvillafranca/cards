@@ -6,12 +6,15 @@ export declare class UpdateCardController {
     private readonly loggingService;
     constructor(cardService: UpdateCardService, loggingService: LoggingService);
     update(id: string, updateCardDto: UpdateCardDto, req: any): Promise<{
-        id: number;
-        title: string | undefined;
-        descriptions: {
-            idDescription?: number;
-            description: string;
-        }[] | undefined;
         message: string;
+        data: {
+            id: number;
+            title: string | undefined;
+            descriptions: {
+                idDescription?: number;
+                description: string;
+            }[] | undefined;
+            message: string;
+        };
     }>;
 }

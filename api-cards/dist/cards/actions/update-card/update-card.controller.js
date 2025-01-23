@@ -25,10 +25,20 @@ let UpdateCardController = class UpdateCardController {
         this.cardService = cardService;
         this.loggingService = loggingService;
     }
-    update(id, updateCardDto, req) {
+    async update(id, updateCardDto, req) {
         const connection = req.connection;
-        this.loggingService.log('ACTUALIZAR', `Se actualizó la tarjeta con el ID: ${id}`);
-        return this.cardService.update(+id, updateCardDto, connection);
+        try {
+            this.loggingService.log('ACTUALIZAR', `Se actualizó la tarjeta con el ID: ${id}`);
+            const result = await this.cardService.update(+id, updateCardDto, connection);
+            return {
+                message: 'tarjeta actualizada exitosamente...',
+                data: result,
+            };
+        }
+        catch (error) {
+            console.error('Error al actualizar tarjeta:', error);
+            throw error;
+        }
     }
 };
 exports.UpdateCardController = UpdateCardController;
@@ -45,7 +55,7 @@ __decorate([
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, update_card_dto_1.UpdateCardDto, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], UpdateCardController.prototype, "update", null);
 exports.UpdateCardController = UpdateCardController = __decorate([
     (0, swagger_1.ApiTags)('Tarjetas'),

@@ -22,13 +22,38 @@ let ReadCardController = class ReadCardController {
     constructor(cardService) {
         this.cardService = cardService;
     }
-    findAll(req) {
+    async findAll(req) {
         const connection = req.connection;
-        return this.cardService.findAll(connection);
+        try {
+            const result = await this.cardService.findAll(connection);
+            return {
+                message: 'tarjetas leídas exitosamente...',
+                data: result,
+            };
+        }
+        catch (error) {
+            console.error('Error al obtener todas las tarjetas:', error);
+            throw error;
+        }
     }
-    findOne(id, req) {
+    async findOne(id, req) {
         const connection = req.connection;
-        return this.cardService.findOne(+id, connection);
+        try {
+            const result = await this.cardService.findOne(+id, connection);
+            if (!result) {
+                return {
+                    message: `no se encontro ninguna tarjeta con ${id}.`,
+                };
+            }
+            return {
+                message: 'tarjeta leída exitosamente...',
+                data: result,
+            };
+        }
+        catch (error) {
+            console.error(`Error al obtener la tarjeta con ID ${id}:`, error);
+            throw error;
+        }
     }
 };
 exports.ReadCardController = ReadCardController;
@@ -39,7 +64,7 @@ __decorate([
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], ReadCardController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
@@ -51,7 +76,7 @@ __decorate([
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], ReadCardController.prototype, "findOne", null);
 exports.ReadCardController = ReadCardController = __decorate([
     (0, swagger_1.ApiTags)('Tarjetas'),

@@ -7,33 +7,36 @@ import {
 import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { DatabaseService } from '../database/database.service';
+import { Knex } from 'knex';
 
 @Injectable()
 export class TransactionInterceptor implements NestInterceptor {
   constructor(private readonly databaseService: DatabaseService) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
-      const httpContext = context.switchToHttp();
-      const request = httpContext.getRequest();
+    const httpContext = context.switchToHttp();
+    const request = httpContext.getRequest();
 
-      const connection = await this.databaseService.getConnection();
-      await connection.beginTransaction();
-      console.log('Transacción iniciada');
+    const trx: Knex.Transaction = await this.databaseService
+      .getKnexInstance()
+      .transaction();
+    console.log('Transacción iniciada con Knex');
 
-      request.connection = connection; // aquí se lo paso al controlador
+    request.connection = trx;
 
-      return next.handle().pipe(
-          tap(async () => {
-              await connection.commit();
-              console.log('Transacción confirmada (commit)');
-              connection.release(); 
-          }),
-          catchError(async (error) => {
-              await connection.rollback();
-              console.error('Transacción revertida (rollback) debido a un error:', error);
-              connection.release(); 
-              throw error;
-          }),
-      );
+    return next.handle().pipe(
+      tap(async () => {
+        await trx.commit();
+        console.log('Transacción confirmada (commit)');
+      }),
+      catchError(async (error) => {
+        await trx.rollback();
+        console.error(
+          'Transacción revertida (rollback) debido a un error:',
+          error,
+        );
+        throw error;
+      }),
+    );
   }
 }

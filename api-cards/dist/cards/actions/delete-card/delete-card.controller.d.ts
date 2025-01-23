@@ -6,5 +6,8 @@ export declare class DeleteCardController {
     constructor(cardService: DeleteCardService, loggingService: LoggingService);
     remove(id: string, req: any): Promise<{
         message: string;
+        data: {
+            message: string;
+        };
     }>;
 }

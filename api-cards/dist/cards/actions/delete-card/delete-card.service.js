@@ -10,11 +10,19 @@ exports.DeleteCardService = void 0;
 const common_1 = require("@nestjs/common");
 let DeleteCardService = class DeleteCardService {
     async remove(id, connection) {
-        const deleteDescriptionsQuery = `DELETE FROM descriptions WHERE idCard = ?`;
-        await connection.execute(deleteDescriptionsQuery, [id]);
-        const deleteCardsQuery = `DELETE FROM cards WHERE idCard = ?`;
-        await connection.execute(deleteCardsQuery, [id]);
-        return { message: `La tarjeta con el ID ${id} y sus descripciones han sido eliminadas exitosamente` };
+        try {
+            await connection('descriptions')
+                .where('idCard', id)
+                .del();
+            await connection('cards')
+                .where('idCard', id)
+                .del();
+            return { message: `La tarjeta con el ID ${id} y sus descripciones han sido eliminadas...` };
+        }
+        catch (error) {
+            console.error('Error al eliminar la tarjeta:', error);
+            throw new Error('ocurrió un error al intentar eliminar...');
+        }
     }
 };
 exports.DeleteCardService = DeleteCardService;

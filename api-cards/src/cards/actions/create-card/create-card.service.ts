@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCardDto } from '../create-card/create-card.dto';
+import { Knex } from 'knex';
 
 @Injectable()
 export class CreateCardService {
-  async create(createCardDto: CreateCardDto, connection: any) {
+  async create(createCardDto: CreateCardDto, connection: Knex.Transaction) {
     const { title, descriptions } = createCardDto;
 
     if (!title) {
@@ -14,25 +15,26 @@ export class CreateCardService {
       throw new Error('Las descripciones deben ser una matriz válida.');
     }
 
-    const queryInsertCard = `
-      INSERT INTO cards (titleCard, createdAt) 
-      VALUES (?, NOW())
-    `;
-    const queryInsertDescriptions = `
-      INSERT INTO descriptions (description, idCard) 
-      VALUES (?, ?)
-    `;
+    try {
+      const [idCard] = await connection('cards').insert(
+        { titleCard: title, createdAt: connection.fn.now() }
+      );
 
-    const [cardResult]: any = await connection.execute(queryInsertCard, [title]);
-    const idCard = cardResult.insertId;
+      const descriptionsToInsert = descriptions
+        .filter((desc) => typeof desc === 'string' && desc.trim() !== '')
+        .map((desc) => ({
+          description: desc.trim(),
+          idCard,
+        }));
 
-    for (const desc of descriptions) {
-      if (typeof desc !== 'string' || desc.trim() === '') {
-        continue;
+      if (descriptionsToInsert.length > 0) {
+        await connection('descriptions').insert(descriptionsToInsert);
       }
-      await connection.execute(queryInsertDescriptions, [desc.trim(), idCard]);
-    }
 
-    return { idCard, titleCard: title, descriptions };
+      return { idCard, titleCard: title, descriptions };
+    } catch (error) {
+      console.error('Error cuando se intentó crear la tarjeta...', error);
+      throw error;
+    }
   }
 }

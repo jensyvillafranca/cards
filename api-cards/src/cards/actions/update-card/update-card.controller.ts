@@ -5,6 +5,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/s
 import { LoggingService } from '../../../logs/logging.service';
 import { UseInterceptors } from '@nestjs/common';
 import { TransactionInterceptor } from '../../../interceptors/transaction.interceptor';
+import { Knex } from 'knex';
 
 @ApiTags('Tarjetas')
 @Controller('cards')
@@ -22,9 +23,19 @@ export class UpdateCardController {
   @ApiResponse({ status: 400, description: 'Datos de entrada no válidos.' })
   @ApiParam({ name: 'id', description: 'Identificador único de la tarjeta', type: Number })
   @ApiBody({ description: 'Cuerpo de la solicitud para actualizar la tarjeta', type: UpdateCardDto })
-  update(@Param('id') id: string, @Body() updateCardDto: UpdateCardDto, @Req() req: any) {
-    const connection = req.connection;
-    this.loggingService.log('ACTUALIZAR', `Se actualizó la tarjeta con el ID: ${id}`);
-    return this.cardService.update(+id, updateCardDto, connection);
+  async update(@Param('id') id: string, @Body() updateCardDto: UpdateCardDto, @Req() req: any) {
+    const connection: Knex.Transaction = req.connection;
+
+    try {
+      this.loggingService.log('ACTUALIZAR', `Se actualizó la tarjeta con el ID: ${id}`);
+      const result = await this.cardService.update(+id, updateCardDto, connection);
+      return {
+        message: 'tarjeta actualizada exitosamente...',
+        data: result,
+      };
+    } catch (error) {
+      console.error('Error al actualizar tarjeta:', error);
+      throw error;
+    }
   }
 }
